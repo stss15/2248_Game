@@ -1,14 +1,14 @@
 import React from 'react';
 import { ActivePowerUpMode } from '../types.js';
 import { getPowerUpIcon, getPowerUpTooltip, PowerUpColors } from '../utils/theme.js';
-const StatItem = ({ label, value, className }) => (React.createElement("div", { className: `p-3 bg-slate-700 rounded-lg shadow text-center ${className}` },
-    React.createElement("div", { className: "text-xs text-sky-300 uppercase tracking-wider" }, label),
-    React.createElement("div", { className: "text-2xl font-bold text-white" }, value)));
+const StatItem = ({ label, value, className }) => (React.createElement("div", { className: `p-2 sm:p-3 bg-slate-700 rounded-lg shadow text-center ${className}` },
+    React.createElement("div", { className: "text-xs sm:text-sm text-sky-300 uppercase tracking-wider" }, label),
+    React.createElement("div", { className: "text-xl sm:text-2xl font-bold text-white" }, value)));
 const HudDisplay = ({ score, energy, turn, mission, availablePowerUps, gameStats, isDoublerActive, activePowerUpMode, onActivatePowerUp, onCancelPowerUp }) => {
     const isTargetingPowerUp = activePowerUpMode === ActivePowerUpMode.BOMB_TARGETING ||
         activePowerUpMode === ActivePowerUpMode.TELEPORT_SELECT_1 ||
         activePowerUpMode === ActivePowerUpMode.TELEPORT_SELECT_2;
-    return (React.createElement("div", { className: "w-full md:w-96 p-4 space-y-4 bg-slate-800 rounded-lg shadow-2xl text-slate-100" },
+    return (React.createElement("div", { className: "w-full md:w-96 p-3 sm:p-4 space-y-4 bg-slate-800 rounded-lg shadow-2xl text-slate-100 hud-glass fade-in" },
         React.createElement("div", { className: "grid grid-cols-3 gap-2" },
             React.createElement(StatItem, { label: "Score", value: score }),
             React.createElement(StatItem, { label: "Energy", value: energy, className: energy <= 5 ? 'text-red-400' : energy <= 10 ? 'text-yellow-400' : 'text-green-400' }),

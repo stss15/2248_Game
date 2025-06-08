@@ -17,9 +17,9 @@ interface HudDisplayProps {
 }
 
 const StatItem: React.FC<{ label: string; value: string | number; className?: string }> = ({ label, value, className }) => (
-  <div className={`p-3 bg-slate-700 rounded-lg shadow text-center ${className}`}>
-    <div className="text-xs text-sky-300 uppercase tracking-wider">{label}</div>
-    <div className="text-2xl font-bold text-white">{value}</div>
+  <div className={`p-2 sm:p-3 bg-slate-700 rounded-lg shadow text-center ${className}`}>
+    <div className="text-xs sm:text-sm text-sky-300 uppercase tracking-wider">{label}</div>
+    <div className="text-xl sm:text-2xl font-bold text-white">{value}</div>
   </div>
 );
 
@@ -32,7 +32,7 @@ const HudDisplay: React.FC<HudDisplayProps> = ({
                              activePowerUpMode === ActivePowerUpMode.TELEPORT_SELECT_2;
 
   return (
-    <div className="w-full md:w-96 p-4 space-y-4 bg-slate-800 rounded-lg shadow-2xl text-slate-100">
+    <div className="w-full md:w-96 p-3 sm:p-4 space-y-4 bg-slate-800 rounded-lg shadow-2xl text-slate-100 hud-glass fade-in">
       <div className="grid grid-cols-3 gap-2">
         <StatItem label="Score" value={score} />
         <StatItem label="Energy" value={energy} className={energy <= 5 ? 'text-red-400' : energy <=10 ? 'text-yellow-400' : 'text-green-400'}/>

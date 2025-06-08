@@ -7,7 +7,7 @@ const GridDisplay = ({ grid, enemies, selectedPath, activePowerUpMode, teleportF
         // The main logic for 'up' interaction type is passed via onTileInteraction and typically handled in useGameLogic.
         onMouseUpGlobal();
     };
-    return (React.createElement("div", { className: "grid gap-1 p-2 bg-slate-700 rounded-lg shadow-xl", style: {
+    return (React.createElement("div", { className: "grid gap-1 sm:gap-2 p-2 sm:p-4 bg-slate-700 rounded-lg shadow-xl", style: {
             gridTemplateRows: `repeat(${grid.length}, minmax(0, 1fr))`,
             gridTemplateColumns: `repeat(${grid[0]?.length || 0}, minmax(0, 1fr))`,
         }, onMouseUp: handleMouseUp, onMouseLeave: handleMouseUp }, grid.map((row, r) => row.map((tile, c) => {

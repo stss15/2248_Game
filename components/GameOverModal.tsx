@@ -13,8 +13,8 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ reason, score, gameStats,
   if (!reason) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-800 p-6 md:p-8 rounded-xl shadow-2xl text-center w-full max-w-md transform transition-all scale-100 opacity-100">
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4 fade-in">
+      <div className="bg-slate-800 p-6 md:p-8 rounded-xl shadow-2xl text-center w-full max-w-md transform transition-all scale-100 opacity-100 hud-glass">
         <h2 className="text-3xl font-bold text-red-500 mb-3 font-press-start">Game Over!</h2>
         <p className="text-slate-300 text-lg mb-6">{reason}</p>
         
