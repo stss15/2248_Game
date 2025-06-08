@@ -1,9 +1,11 @@
 
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <head>
+      <meta charset="UTF-8" />
+      <link rel="icon" type="image/svg+xml" href="./vite.svg" />
+      <!-- Ensure relative resource paths resolve correctly when hosted on GitHub Pages -->
+      <base href="./" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tile Merge Saga</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -28,10 +30,10 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
+<link rel="stylesheet" href="./index.css">
 </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
+    <script type="module" src="./index.tsx"></script>
   </body>
 </html>
