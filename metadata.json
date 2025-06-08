@@ -1,0 +1,5 @@
+{
+  "name": "Tile Merge Saga",
+  "description": "A strategic tile-merging game with power-ups, enemies, and missions. Merge tiles of the same value to create higher values, complete missions for rewards, and manage your energy to survive as long as possible.",
+  "requestFramePermissions": []
+}
