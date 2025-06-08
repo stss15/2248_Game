@@ -2,8 +2,8 @@ import React from 'react';
 const GameOverModal = ({ reason, score, gameStats, onRestart }) => {
     if (!reason)
         return null;
-    return (React.createElement("div", { className: "fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" },
-        React.createElement("div", { className: "bg-slate-800 p-6 md:p-8 rounded-xl shadow-2xl text-center w-full max-w-md transform transition-all scale-100 opacity-100" },
+    return (React.createElement("div", { className: "fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4 fade-in" },
+        React.createElement("div", { className: "bg-slate-800 p-6 md:p-8 rounded-xl shadow-2xl text-center w-full max-w-md transform transition-all scale-100 opacity-100 hud-glass" },
             React.createElement("h2", { className: "text-3xl font-bold text-red-500 mb-3 font-press-start" }, "Game Over!"),
             React.createElement("p", { className: "text-slate-300 text-lg mb-6" }, reason),
             React.createElement("div", { className: "mb-6 p-4 bg-slate-700 rounded-lg" },

@@ -22,8 +22,8 @@ const GridDisplay: React.FC<GridDisplayProps> = ({ grid, enemies, selectedPath, 
   };
   
   return (
-    <div 
-      className="grid gap-1 p-2 bg-slate-700 rounded-lg shadow-xl"
+    <div
+      className="grid gap-1 sm:gap-2 p-2 sm:p-4 bg-slate-700 rounded-lg shadow-xl"
       style={{
         gridTemplateRows: `repeat(${grid.length}, minmax(0, 1fr))`,
         gridTemplateColumns: `repeat(${grid[0]?.length || 0}, minmax(0, 1fr))`,

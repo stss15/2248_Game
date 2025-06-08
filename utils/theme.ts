@@ -28,7 +28,7 @@ export const getTileColors = (value: number, cooldown: number, isEnemy?: boolean
     }
   }
 
-  let effects = 'transition-all duration-150 ease-in-out transform hover:scale-105';
+  let effects = 'transition-all duration-200 ease-out transform hover:scale-105 active:scale-95';
   if (isSelected) {
     effects += ' ring-4 ring-yellow-400 scale-110 z-10';
     if(isPathEnd) effects += ' ring-sky-300';
