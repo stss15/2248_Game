@@ -1,14 +1,16 @@
 # Run and deploy your AI Studio app
 
-This contains everything you need to run your app locally.
+This project can be hosted directly on GitHub Pages using the files in this
+repository.  The `dist/` directory contains JavaScript compiled from the source
+TypeScript so no build step is required when serving the site.
 
-## Run Locally
+## Local development
 
-**Prerequisites:**  Node.js
+If you want to modify the TypeScript sources you will need Node.js installed.
 
+1. Install dependencies with `npm install`.
+2. After making changes run `node compile_ts.cjs` to update the files in
+   `dist/`.
+3. Open `index.html` in your browser or push to GitHub Pages to view the app.
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+The hosted version simply serves `index.html` and the files under `dist/`.
