@@ -1,7 +1,17 @@
 
 import React from 'react';
+import { useSpring, animated } from 'react-spring';
 import { PowerUp, Mission, ActivePowerUpMode, GameStats } from '../types';
 import { getPowerUpIcon, getPowerUpTooltip, PowerUpColors } from '../utils/theme';
+
+const AnimatedScore: React.FC<{ score: number }> = ({ score }) => {
+  const { number } = useSpring({
+    from: { number: 0 },
+    to: { number: score },
+    config: { mass: 1, tension: 280, friction: 60 }
+  });
+  return <animated.span>{number.to(n => n.toFixed(0))}</animated.span>;
+};
 
 interface HudDisplayProps {
   score: number;
@@ -16,7 +26,7 @@ interface HudDisplayProps {
   onCancelPowerUp: () => void;
 }
 
-const StatItem: React.FC<{ label: string; value: string | number; className?: string }> = ({ label, value, className }) => (
+const StatItem: React.FC<{ label: string; value: React.ReactNode; className?: string }> = ({ label, value, className }) => (
   <div className={`p-2 sm:p-3 bg-slate-700 rounded-lg shadow text-center ${className}`}>
     <div className="text-xs sm:text-sm text-sky-300 uppercase tracking-wider">{label}</div>
     <div className="text-xl sm:text-2xl font-bold text-white">{value}</div>
@@ -36,7 +46,7 @@ const HudDisplay: React.FC<HudDisplayProps> = ({
   return (
     <div className="w-full md:w-96 p-3 sm:p-4 space-y-4 bg-slate-800 rounded-lg shadow-2xl text-slate-100 hud-glass fade-in">
       <div className="grid grid-cols-3 gap-2">
-        <StatItem label="Score" value={score} />
+        <StatItem label="Score" value={<AnimatedScore score={score} />} />
         <StatItem label="Energy" value={energy} className={energy <= 5 ? 'text-red-400' : energy <=10 ? 'text-yellow-400' : 'text-green-400'}/>
         <StatItem label="Turn" value={turn} />
       </div>
