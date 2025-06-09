@@ -1,7 +1,17 @@
 
 import React from 'react';
+import { useSpring, animated } from 'react-spring';
 import { PowerUp, Mission, ActivePowerUpMode, GameStats } from '../types';
 import { getPowerUpIcon, getPowerUpTooltip, PowerUpColors } from '../utils/theme';
+
+const AnimatedScore: React.FC<{ score: number }> = ({ score }) => {
+  const { number } = useSpring({
+    from: { number: 0 },
+    to: { number: score },
+    config: { mass: 1, tension: 280, friction: 60 }
+  });
+  return <animated.span>{number.to(n => n.toFixed(0))}</animated.span>;
+};
 
 interface HudDisplayProps {
   score: number;
@@ -16,7 +26,7 @@ interface HudDisplayProps {
   onCancelPowerUp: () => void;
 }
 
-const StatItem: React.FC<{ label: string; value: string | number; className?: string }> = ({ label, value, className }) => (
+const StatItem: React.FC<{ label: string; value: React.ReactNode; className?: string }> = ({ label, value, className }) => (
   <div className={`p-2 sm:p-3 bg-slate-700 rounded-lg shadow text-center ${className}`}>
     <div className="text-xs sm:text-sm text-sky-300 uppercase tracking-wider">{label}</div>
     <div className="text-xl sm:text-2xl font-bold text-white">{value}</div>
@@ -27,14 +37,16 @@ const HudDisplay: React.FC<HudDisplayProps> = ({
   score, energy, turn, mission, availablePowerUps, gameStats,
   isDoublerActive, activePowerUpMode, onActivatePowerUp, onCancelPowerUp
 }) => {
-  const isTargetingPowerUp = activePowerUpMode === ActivePowerUpMode.BOMB_TARGETING || 
+  const isTargetingPowerUp = activePowerUpMode === ActivePowerUpMode.BOMB_TARGETING ||
                              activePowerUpMode === ActivePowerUpMode.TELEPORT_SELECT_1 ||
-                             activePowerUpMode === ActivePowerUpMode.TELEPORT_SELECT_2;
+                             activePowerUpMode === ActivePowerUpMode.TELEPORT_SELECT_2 ||
+                             activePowerUpMode === ActivePowerUpMode.SHOVE_SELECT_1 ||
+                             activePowerUpMode === ActivePowerUpMode.SHOVE_SELECT_2;
 
   return (
     <div className="w-full md:w-96 p-3 sm:p-4 space-y-4 bg-slate-800 rounded-lg shadow-2xl text-slate-100 hud-glass fade-in">
       <div className="grid grid-cols-3 gap-2">
-        <StatItem label="Score" value={score} />
+        <StatItem label="Score" value={<AnimatedScore score={score} />} />
         <StatItem label="Energy" value={energy} className={energy <= 5 ? 'text-red-400' : energy <=10 ? 'text-yellow-400' : 'text-green-400'}/>
         <StatItem label="Turn" value={turn} />
       </div>
@@ -51,6 +63,8 @@ const HudDisplay: React.FC<HudDisplayProps> = ({
                 {activePowerUpMode === ActivePowerUpMode.BOMB_TARGETING && "Select Bomb Target"}
                 {activePowerUpMode === ActivePowerUpMode.TELEPORT_SELECT_1 && "Select First Tile to Teleport"}
                 {activePowerUpMode === ActivePowerUpMode.TELEPORT_SELECT_2 && "Select Second Tile to Teleport"}
+                {activePowerUpMode === ActivePowerUpMode.SHOVE_SELECT_1 && "Select Enemy to Shove"}
+                {activePowerUpMode === ActivePowerUpMode.SHOVE_SELECT_2 && "Select Adjacent Target Tile"}
             </p>
             <button 
                 onClick={onCancelPowerUp} 
@@ -68,7 +82,7 @@ const HudDisplay: React.FC<HudDisplayProps> = ({
           <div className="w-full bg-slate-600 rounded-full h-2.5 mt-2">
             <div 
               className={`h-2.5 rounded-full ${mission.isCompleted ? 'bg-green-500' : 'bg-sky-500'}`} 
-              style={{ width: `${mission.isCompleted ? 100 : Math.min(100, (mission.progress / (mission.target.count || mission.target.chainLength || mission.target.scoreInMerge || mission.target.enemiesDestroyed || 1)) * 100)}%` }}
+              style={{ width: `${mission.isCompleted ? 100 : Math.min(100, (mission.progress / (mission.target.count || mission.target.chainLength || mission.target.scoreInMerge || mission.target.enemiesDestroyed || mission.target.enemiesStunned || 1)) * 100)}%` }}
             ></div>
           </div>
           {mission.isCompleted && <p className="text-xs text-green-400 mt-1">Completed! Reward: {JSON.stringify(mission.reward)}</p>}
