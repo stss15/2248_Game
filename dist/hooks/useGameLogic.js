@@ -27,6 +27,7 @@ const useGameLogic = () => {
     const [activePowerUpMode, setActivePowerUpMode] = useState(ActivePowerUpMode.NONE);
     const [isDoublerActive, setIsDoublerActive] = useState(false);
     const [teleportFirstTile, setTeleportFirstTile] = useState(null);
+    const [shoveEnemySource, setShoveEnemySource] = useState(null);
     const [gameStats, setGameStats] = useState({
         mergesMade: 0, tilesSpawned: GRID_ROWS * GRID_COLS, powerUpsUsed: 0, enemiesDefeated: 0, maxChainLength: 0, highestTileValue: 0
     });
@@ -43,7 +44,7 @@ const useGameLogic = () => {
         });
     }, []);
     const checkMissionCompletion = useCallback((updatedGrid, mergedValueOutput, // Pass object for clarity
-    chainLength, chainValues, numEnemiesDestroyedThisTurn) => {
+    chainLength, chainValues, numEnemiesDestroyedThisTurn, numEnemiesStunnedThisTurn) => {
         setCurrentMission(prevMission => {
             if (prevMission.isCompleted)
                 return prevMission;
@@ -81,6 +82,11 @@ const useGameLogic = () => {
                 if (newProgress >= target.enemiesDestroyed)
                     completed = true;
             }
+            else if (target.enemiesStunned && numEnemiesStunnedThisTurn && numEnemiesStunnedThisTurn > 0) {
+                newProgress = (prevMission.progress || 0) + numEnemiesStunnedThisTurn;
+                if (newProgress >= target.enemiesStunned)
+                    completed = true;
+            }
             if (completed) {
                 setScore(s => s + (prevMission.reward.score || 0));
                 setEnergy(e => e + (prevMission.reward.energy || 0));
@@ -104,8 +110,16 @@ const useGameLogic = () => {
     }, []);
     const moveAndSpawnEnemies = useCallback((currentGrid, currentEnemies, currentTurn) => {
         let enemiesAfterMove = [...currentEnemies];
+        // Decrement stun counters before moving
         let newMovedEnemies = enemiesAfterMove.map(enemy => {
-            if (enemy.r === ENEMY_TARGET_R && enemy.c === ENEMY_TARGET_C)
+            if (enemy.stunnedForTurns && enemy.stunnedForTurns > 0) {
+                return { ...enemy, stunnedForTurns: enemy.stunnedForTurns - 1 };
+            }
+            return enemy;
+        });
+        enemiesAfterMove = newMovedEnemies;
+        newMovedEnemies = enemiesAfterMove.map(enemy => {
+            if ((enemy.r === ENEMY_TARGET_R && enemy.c === ENEMY_TARGET_C) || (enemy.stunnedForTurns && enemy.stunnedForTurns > 0))
                 return enemy;
             let dr = Math.sign(ENEMY_TARGET_R - enemy.r);
             let dc = Math.sign(ENEMY_TARGET_C - enemy.c);
@@ -172,7 +186,7 @@ const useGameLogic = () => {
         }
         return false;
     }, []);
-    const advanceTurn = useCallback((processedGrid, newEnergy, newScore, mergeDetails, enemiesDestroyedThisMerge, currentEnemiesOverride) => {
+    const advanceTurn = useCallback((processedGrid, newEnergy, newScore, mergeDetails, enemiesDestroyedThisMerge, enemiesStunnedThisMerge, currentEnemiesOverride) => {
         let gridAfterCooldowns = decrementCooldowns(processedGrid);
         const baseEnemies = currentEnemiesOverride ?? enemies;
         let updatedEnemies = moveAndSpawnEnemies(gridAfterCooldowns, baseEnemies, turn + 1); // Pass next turn for spawn logic
@@ -190,11 +204,11 @@ const useGameLogic = () => {
             if (enemiesDestroyedThisMerge && enemiesDestroyedThisMerge > 0) {
                 updateStats({ enemiesDefeated: gameStats.enemiesDefeated + enemiesDestroyedThisMerge });
             }
-            checkMissionCompletion(gridAfterCooldowns, { value: mergeDetails.scoreFromMerge, isDoubled: isDoublerActive }, mergeDetails.chainLength, mergeDetails.chainValues, enemiesDestroyedThisMerge);
+            checkMissionCompletion(gridAfterCooldowns, { value: mergeDetails.scoreFromMerge, isDoubled: isDoublerActive }, mergeDetails.chainLength, mergeDetails.chainValues, enemiesDestroyedThisMerge, enemiesStunnedThisMerge);
             awardPowerUp(mergeDetails.chainLength);
         }
         else { // For power-up usage or other non-merge turn advances
-            checkMissionCompletion(gridAfterCooldowns, undefined, undefined, undefined, enemiesDestroyedThisMerge);
+            checkMissionCompletion(gridAfterCooldowns, undefined, undefined, undefined, enemiesDestroyedThisMerge, enemiesStunnedThisMerge);
         }
         setIsDoublerActive(false); // Reset doubler after turn advances (if it was used)
         // Game over check should be the very last thing after all state updates for the turn
@@ -245,7 +259,7 @@ const useGameLogic = () => {
                 setActivePowerUpMode(ActivePowerUpMode.NONE);
                 updateStats({ powerUpsUsed: gameStats.powerUpsUsed + 1 });
                 advanceTurn(gridAfterGravity, energy - ENERGY_COST_PER_MERGE, // Bomb costs energy
-                score, undefined, enemiesDestroyedCount, currentEnemies);
+                score, undefined, enemiesDestroyedCount, undefined, currentEnemies);
             }
             return;
         }
@@ -280,7 +294,35 @@ const useGameLogic = () => {
                 setTeleportFirstTile(null);
                 updateStats({ powerUpsUsed: gameStats.powerUpsUsed + 1 });
                 advanceTurn(newGrid, energy - ENERGY_COST_PER_MERGE, // Teleport costs energy
-                score, undefined, undefined, updatedEnemies);
+                score, undefined, undefined, undefined, updatedEnemies);
+            }
+            return;
+        }
+        if (activePowerUpMode === ActivePowerUpMode.SHOVE_SELECT_1) {
+            if (interactionType === 'down' && enemies.some(e => e.r === r && e.c === c)) {
+                setShoveEnemySource({ r, c });
+                setActivePowerUpMode(ActivePowerUpMode.SHOVE_SELECT_2);
+            }
+            return;
+        }
+        if (activePowerUpMode === ActivePowerUpMode.SHOVE_SELECT_2 && shoveEnemySource) {
+            if (interactionType === 'down') {
+                const sourcePos = shoveEnemySource;
+                const targetPos = { r, c };
+                const dr = targetPos.r - sourcePos.r;
+                const dc = targetPos.c - sourcePos.c;
+                if (Math.abs(dr) <= 1 && Math.abs(dc) <= 1 && (dr !== 0 || dc !== 0) && isValidCoordinate(r, c) && !grid[r][c] && !enemies.some(e => e.r === r && e.c === c)) {
+                    let updatedEnemies = enemies.map(en => {
+                        if (en.r === sourcePos.r && en.c === sourcePos.c) {
+                            return { ...en, r: targetPos.r, c: targetPos.c };
+                        }
+                        return en;
+                    });
+                    setActivePowerUpMode(ActivePowerUpMode.NONE);
+                    setShoveEnemySource(null);
+                    updateStats({ powerUpsUsed: gameStats.powerUpsUsed + 1 });
+                    advanceTurn(grid, energy, score, undefined, undefined, undefined, updatedEnemies);
+                }
             }
             return;
         }
@@ -318,6 +360,7 @@ const useGameLogic = () => {
                 if (validatePath(grid, selectedPath)) {
                     const { newGrid: gridAfterMerge, mergedValue, scoreEarned } = processMerge(grid, selectedPath, isDoublerActive);
                     let enemiesDestroyedCount = 0;
+                    let enemiesStunnedCount = 0;
                     let currentEnemies = [...enemies];
                     // Remove enemies that occupy any tile in the merge path
                     selectedPath.forEach(pos => {
@@ -346,19 +389,39 @@ const useGameLogic = () => {
                             }
                         }
                     }
-                    if (enemiesDestroyedCount > 0)
+                    // Stun adjacent enemies for chains of length >= 4
+                    if (selectedPath.length >= 4) {
+                        const lastMergedTilePos = selectedPath[selectedPath.length - 1];
+                        for (let dr_stun = -1; dr_stun <= 1; dr_stun++) {
+                            for (let dc_stun = -1; dc_stun <= 1; dc_stun++) {
+                                if (dr_stun === 0 && dc_stun === 0)
+                                    continue;
+                                const adjR = lastMergedTilePos.r + dr_stun;
+                                const adjC = lastMergedTilePos.c + dc_stun;
+                                if (isValidCoordinate(adjR, adjC)) {
+                                    const eIdx = currentEnemies.findIndex(en => en.r === adjR && en.c === adjC);
+                                    if (eIdx !== -1) {
+                                        const curr = currentEnemies[eIdx];
+                                        currentEnemies[eIdx] = { ...curr, stunnedForTurns: 2 };
+                                        enemiesStunnedCount++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (enemiesDestroyedCount > 0 || enemiesStunnedCount > 0)
                         setEnemies(currentEnemies);
                     const gridAfterGravity = applyGravityAndSpawn(gridAfterMerge);
                     const newEnergy = energy - ENERGY_COST_PER_MERGE + Math.floor(selectedPath.length / ENERGY_BONUS_PER_5_CHAIN);
                     const newScore = score + scoreEarned;
                     const chainValues = selectedPath.map(p => grid[p.r][p.c].value);
-                    advanceTurn(gridAfterGravity, newEnergy, newScore, { chainLength: selectedPath.length, mergedValue, chainValues, scoreFromMerge: scoreEarned }, enemiesDestroyedCount, currentEnemies);
+                    advanceTurn(gridAfterGravity, newEnergy, newScore, { chainLength: selectedPath.length, mergedValue, chainValues, scoreFromMerge: scoreEarned }, enemiesDestroyedCount, enemiesStunnedCount, currentEnemies);
                 }
             }
             setIsDragging(false);
             setSelectedPath([]);
         }
-    }, [grid, isDragging, selectedPath, gameOverReason, activePowerUpMode, teleportFirstTile, energy, score, enemies, isDoublerActive, advanceTurn, gameStats.powerUpsUsed, updateStats]);
+    }, [grid, isDragging, selectedPath, gameOverReason, activePowerUpMode, teleportFirstTile, shoveEnemySource, energy, score, enemies, isDoublerActive, advanceTurn, gameStats.powerUpsUsed, updateStats]);
     const activatePowerUp = useCallback((id) => {
         if (gameOverReason || activePowerUpMode !== ActivePowerUpMode.NONE)
             return;
@@ -379,11 +442,15 @@ const useGameLogic = () => {
             case PowerUpType.TELEPORT:
                 setActivePowerUpMode(ActivePowerUpMode.TELEPORT_SELECT_1);
                 break;
+            case PowerUpType.SHOVE:
+                setActivePowerUpMode(ActivePowerUpMode.SHOVE_SELECT_1);
+                break;
         }
     }, [availablePowerUps, gameOverReason, activePowerUpMode, gameStats.powerUpsUsed, updateStats]);
     const cancelPowerUp = useCallback(() => {
         setActivePowerUpMode(ActivePowerUpMode.NONE);
         setTeleportFirstTile(null);
+        setShoveEnemySource(null);
         // If a power-up was consumed to enter targeting mode (e.g., Bomb, Teleport), it should be returned if cancelled.
         // However, the current logic removes it from availablePowerUps on activation.
         // For simplicity now, cancelling does not return the power-up. This can be changed if desired.
@@ -404,6 +471,7 @@ const useGameLogic = () => {
         setActivePowerUpMode(ActivePowerUpMode.NONE);
         setIsDoublerActive(false);
         setTeleportFirstTile(null);
+        setShoveEnemySource(null);
         setGameStats({
             mergesMade: 0, tilesSpawned: GRID_ROWS * GRID_COLS, powerUpsUsed: 0, enemiesDefeated: 0, maxChainLength: 0, highestTileValue: 0
         });

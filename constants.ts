@@ -6,7 +6,7 @@ export const GRID_COLS = 5;
 export const INITIAL_ENERGY = 30; // Increased for more playtime
 export const TILE_COOLDOWN_TURNS = 3;
 export const POWERUP_AWARD_CHAIN_LENGTH = 5; // Min chain length to get a powerup
-export const ENEMY_DESTRUCTION_CHAIN_LENGTH = 6;
+export const ENEMY_DESTRUCTION_CHAIN_LENGTH = 5; // Reduced from 6 to 5
 
 // Center for enemy AI targeting
 export const ENEMY_TARGET_R = Math.floor((GRID_ROWS - 1) / 2); // For 8 rows -> 3
@@ -27,6 +27,7 @@ export const AVAILABLE_POWERUPS: PowerUpType[] = [
   PowerUpType.BOMB,
   PowerUpType.DOUBLER,
   PowerUpType.TELEPORT,
+  PowerUpType.SHOVE,
 ];
 
 const createMission = (id: string, description: string, target: MissionTarget, reward: Mission['reward']): Mission => ({
@@ -47,4 +48,5 @@ export const PREDEFINED_MISSIONS: Mission[] = [
   createMission("m6", "Achieve a 256 tile", { value: 256, count: 1 }, { energy: 20, score: 1000 }),
   createMission("m7", "Merge a chain of 7 tiles", { chainLength: 7 }, { powerUp: PowerUpType.BOMB, energy: 10 }),
   createMission("m8", "Create three 32 tiles", { value: 32, count: 3 }, { energy: 5, score: 300 }),
+  createMission("m9", "Stun 3 enemies", { enemiesStunned: 3 }, { powerUp: PowerUpType.SHOVE, score: 400 }),
 ];

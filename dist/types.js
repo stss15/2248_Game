@@ -3,6 +3,7 @@ export var PowerUpType;
     PowerUpType["BOMB"] = "BOMB";
     PowerUpType["DOUBLER"] = "DOUBLER";
     PowerUpType["TELEPORT"] = "TELEPORT";
+    PowerUpType["SHOVE"] = "SHOVE";
 })(PowerUpType || (PowerUpType = {}));
 export var GameOverReason;
 (function (GameOverReason) {
@@ -18,4 +19,6 @@ export var ActivePowerUpMode;
     ActivePowerUpMode[ActivePowerUpMode["BOMB_TARGETING"] = 1] = "BOMB_TARGETING";
     ActivePowerUpMode[ActivePowerUpMode["TELEPORT_SELECT_1"] = 2] = "TELEPORT_SELECT_1";
     ActivePowerUpMode[ActivePowerUpMode["TELEPORT_SELECT_2"] = 3] = "TELEPORT_SELECT_2";
+    ActivePowerUpMode[ActivePowerUpMode["SHOVE_SELECT_1"] = 4] = "SHOVE_SELECT_1";
+    ActivePowerUpMode[ActivePowerUpMode["SHOVE_SELECT_2"] = 5] = "SHOVE_SELECT_2";
 })(ActivePowerUpMode || (ActivePowerUpMode = {}));

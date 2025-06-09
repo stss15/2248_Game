@@ -7,7 +7,9 @@ const StatItem = ({ label, value, className }) => (React.createElement("div", { 
 const HudDisplay = ({ score, energy, turn, mission, availablePowerUps, gameStats, isDoublerActive, activePowerUpMode, onActivatePowerUp, onCancelPowerUp }) => {
     const isTargetingPowerUp = activePowerUpMode === ActivePowerUpMode.BOMB_TARGETING ||
         activePowerUpMode === ActivePowerUpMode.TELEPORT_SELECT_1 ||
-        activePowerUpMode === ActivePowerUpMode.TELEPORT_SELECT_2;
+        activePowerUpMode === ActivePowerUpMode.TELEPORT_SELECT_2 ||
+        activePowerUpMode === ActivePowerUpMode.SHOVE_SELECT_1 ||
+        activePowerUpMode === ActivePowerUpMode.SHOVE_SELECT_2;
     return (React.createElement("div", { className: "w-full md:w-96 p-3 sm:p-4 space-y-4 bg-slate-800 rounded-lg shadow-2xl text-slate-100 hud-glass fade-in" },
         React.createElement("div", { className: "grid grid-cols-3 gap-2" },
             React.createElement(StatItem, { label: "Score", value: score }),
@@ -18,14 +20,16 @@ const HudDisplay = ({ score, energy, turn, mission, availablePowerUps, gameStats
             React.createElement("p", { className: "font-semibold text-white" },
                 activePowerUpMode === ActivePowerUpMode.BOMB_TARGETING && "Select Bomb Target",
                 activePowerUpMode === ActivePowerUpMode.TELEPORT_SELECT_1 && "Select First Tile to Teleport",
-                activePowerUpMode === ActivePowerUpMode.TELEPORT_SELECT_2 && "Select Second Tile to Teleport"),
+                activePowerUpMode === ActivePowerUpMode.TELEPORT_SELECT_2 && "Select Second Tile to Teleport",
+                activePowerUpMode === ActivePowerUpMode.SHOVE_SELECT_1 && "Select Enemy to Shove",
+                activePowerUpMode === ActivePowerUpMode.SHOVE_SELECT_2 && "Select Adjacent Target Tile"),
             React.createElement("button", { onClick: onCancelPowerUp, className: "mt-2 px-3 py-1 bg-red-500 hover:bg-red-700 text-white text-xs rounded shadow" }, "Cancel Power-Up"))),
         React.createElement("div", { className: "space-y-3" },
             React.createElement("h3", { className: "text-lg font-semibold text-sky-200 border-b border-slate-700 pb-1" }, "Mission"),
             React.createElement("div", { className: "p-3 bg-slate-700 rounded-lg shadow" },
                 React.createElement("p", { className: "text-sm text-slate-300" }, mission.description),
                 React.createElement("div", { className: "w-full bg-slate-600 rounded-full h-2.5 mt-2" },
-                    React.createElement("div", { className: `h-2.5 rounded-full ${mission.isCompleted ? 'bg-green-500' : 'bg-sky-500'}`, style: { width: `${mission.isCompleted ? 100 : Math.min(100, (mission.progress / (mission.target.count || mission.target.chainLength || mission.target.scoreInMerge || mission.target.enemiesDestroyed || 1)) * 100)}%` } })),
+                    React.createElement("div", { className: `h-2.5 rounded-full ${mission.isCompleted ? 'bg-green-500' : 'bg-sky-500'}`, style: { width: `${mission.isCompleted ? 100 : Math.min(100, (mission.progress / (mission.target.count || mission.target.chainLength || mission.target.scoreInMerge || mission.target.enemiesDestroyed || mission.target.enemiesStunned || 1)) * 100)}%` } })),
                 mission.isCompleted && React.createElement("p", { className: "text-xs text-green-400 mt-1" },
                     "Completed! Reward: ",
                     JSON.stringify(mission.reward)))),

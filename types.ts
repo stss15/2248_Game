@@ -15,6 +15,7 @@ export enum PowerUpType {
   BOMB = 'BOMB',
   DOUBLER = 'DOUBLER',
   TELEPORT = 'TELEPORT',
+  SHOVE = 'SHOVE',
 }
 
 export interface PowerUp {
@@ -24,6 +25,7 @@ export interface PowerUp {
 
 export interface Enemy extends Position {
   id: string;
+  stunnedForTurns?: number;
 }
 
 export interface MissionTarget {
@@ -33,6 +35,7 @@ export interface MissionTarget {
   chainValueProperty?: 'even' | 'odd'; // e.g., chain of even/odd valued tiles
   scoreInMerge?: number; // e.g. achieve X score in a single merge
   enemiesDestroyed?: number; // e.g. destroy X enemies
+  enemiesStunned?: number; // e.g. stun X enemies
 }
 
 export interface Mission {
@@ -71,5 +74,7 @@ export enum ActivePowerUpMode {
   NONE,
   BOMB_TARGETING,
   TELEPORT_SELECT_1,
-  TELEPORT_SELECT_2
+  TELEPORT_SELECT_2,
+  SHOVE_SELECT_1,
+  SHOVE_SELECT_2
 }
