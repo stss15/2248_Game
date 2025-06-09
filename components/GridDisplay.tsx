@@ -1,5 +1,7 @@
 
 import React from 'react';
+import { useTransition, animated } from 'react-spring';
+import { playSound, SoundType } from '../utils/audioManager';
 import { Grid, Position, Enemy, ActivePowerUpMode } from '../types';
 import TileDisplay from './TileDisplay';
 
@@ -21,35 +23,66 @@ const GridDisplay: React.FC<GridDisplayProps> = ({ grid, enemies, selectedPath, 
     onMouseUpGlobal(); 
   };
   
+  const gridItems = grid.flatMap((row, r) =>
+    row.map((tile, c) => tile ? { ...tile, r, c } : null)
+  ).filter(Boolean);
+
+  const transitions = useTransition(gridItems, {
+    keys: (item) => item!.id,
+    from: { opacity: 0, transform: 'translateY(-100%) scale(0.5)' },
+    enter: { opacity: 1, transform: 'translateY(0%) scale(1)' },
+    leave: { opacity: 0, transform: 'scale(0)' },
+    trail: 15,
+    config: { tension: 250, friction: 20 }
+  });
+
   return (
     <div
-      className="grid gap-1 sm:gap-2 p-2 sm:p-4 bg-slate-700 rounded-lg shadow-xl"
+      className="relative grid gap-1 sm:gap-2 p-2 sm:p-4 bg-slate-700 rounded-lg shadow-xl"
       style={{
         gridTemplateRows: `repeat(${grid.length}, minmax(0, 1fr))`,
         gridTemplateColumns: `repeat(${grid[0]?.length || 0}, minmax(0, 1fr))`,
       }}
-      onMouseUp={handleMouseUp} // Capture mouse up on the grid container
-      onMouseLeave={handleMouseUp} // Also end drag if mouse leaves grid
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
     >
-      {grid.map((row, r) =>
-        row.map((tile, c) => {
-          const position = { r, c };
-          const enemyOnTile = enemies.find(enemy => enemy.r === r && enemy.c === c) || null;
-          const isSelected = selectedPath.some(p => p.r === r && p.c === c);
-          const isPathEnd = isSelected && selectedPath.length > 0 && selectedPath[selectedPath.length-1].r === r && selectedPath[selectedPath.length-1].c === c;
-          
-          let isTeleportTargetVisual = false;
-          if (activePowerUpMode === ActivePowerUpMode.TELEPORT_SELECT_1 && tile) {
-            isTeleportTargetVisual = true; // Highlight all valid tiles for first selection
-          } else if (activePowerUpMode === ActivePowerUpMode.TELEPORT_SELECT_2 && tile && teleportFirstTile && (r !== teleportFirstTile.r || c !== teleportFirstTile.c)) {
-             isTeleportTargetVisual = true; // Highlight valid second selection tiles
-          }
+      {Array.from({ length: grid.length * grid[0].length }).map((_, i) => (
+        <div key={i} className="w-full aspect-square" />
+      ))}
 
+      {transitions((style, item) => {
+        const r = item!.r; const c = item!.c;
+        const position = { r, c };
+        const enemyOnTile = enemies.find(e => e.r === r && e.c === c) || null;
+        const isSelected = selectedPath.some(p => p.r === r && p.c === c);
+        const isPathEnd = isSelected && selectedPath.length > 0 && selectedPath[selectedPath.length-1].r === r && selectedPath[selectedPath.length-1].c === c;
 
-          return (
+        let isTeleportTargetVisual = false;
+        if (activePowerUpMode === ActivePowerUpMode.TELEPORT_SELECT_1 && item) {
+          isTeleportTargetVisual = true;
+        } else if (activePowerUpMode === ActivePowerUpMode.TELEPORT_SELECT_2 && item && teleportFirstTile && (r !== teleportFirstTile.r || c !== teleportFirstTile.c)) {
+          isTeleportTargetVisual = true;
+        }
+
+        return (
+          <animated.div
+            key={item!.id}
+            className="absolute"
+            style={{
+              ...style,
+              top: `${r * 100 / grid.length}%`,
+              left: `${c * 100 / grid[0].length}%`,
+              width: `calc(100% / ${grid[0].length})`,
+              height: `calc(100% / ${grid.length})`
+            }}
+            onMouseDown={() => {
+              playSound(SoundType.PATH_SELECT);
+              onTileInteraction(r, c, 'down');
+            }}
+            onMouseEnter={() => onTileInteraction(r, c, 'enter')}
+          >
             <TileDisplay
-              key={`${r}-${c}-${tile?.id || 'empty'}`}
-              tile={tile}
+              tile={item}
               position={position}
               enemyOnTile={enemyOnTile}
               isSelected={isSelected}
@@ -57,9 +90,9 @@ const GridDisplay: React.FC<GridDisplayProps> = ({ grid, enemies, selectedPath, 
               isTeleportTarget={isTeleportTargetVisual}
               onInteraction={onTileInteraction}
             />
-          );
-        })
-      )}
+          </animated.div>
+        );
+      })}
     </div>
   );
 };

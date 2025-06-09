@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 import useGameLogic from './hooks/useGameLogic';
 import GridDisplay from './components/GridDisplay';
 import HudDisplay from './components/HudDisplay';
 import GameOverModal from './components/GameOverModal';
 import { ActivePowerUpMode } from './types';
+import { playSound, SoundType } from './utils/audioManager';
 
 const App: React.FC = () => {
   const {
@@ -13,6 +14,9 @@ const App: React.FC = () => {
     activePowerUpMode, isDoublerActive, teleportFirstTile,
     handleTileInteraction, activatePowerUp, cancelPowerUp, restartGame
   } = useGameLogic();
+
+  const prevMergesMade = useRef(gameStats.mergesMade);
+  const prevPowerUps = useRef(availablePowerUps.length);
 
   const handleGlobalMouseUp = () => {
     // If dragging, finalize path. This will call the 'up' interaction.
@@ -34,6 +38,34 @@ const App: React.FC = () => {
   } else if (activePowerUpMode === ActivePowerUpMode.BOMB_TARGETING || activePowerUpMode === ActivePowerUpMode.TELEPORT_SELECT_1 || activePowerUpMode === ActivePowerUpMode.TELEPORT_SELECT_2) {
     cursorStyle = 'cursor-crosshair';
   }
+
+  useEffect(() => {
+    if (gameStats.mergesMade > prevMergesMade.current) {
+      playSound(SoundType.MERGE);
+    }
+    prevMergesMade.current = gameStats.mergesMade;
+  }, [gameStats.mergesMade]);
+
+  useEffect(() => {
+    if (availablePowerUps.length > prevPowerUps.current) {
+      playSound(SoundType.POWERUP_APPEAR);
+    }
+    prevPowerUps.current = availablePowerUps.length;
+  }, [availablePowerUps]);
+
+  useEffect(() => {
+    if (gameOverReason) {
+      playSound(SoundType.GAME_OVER);
+    }
+  }, [gameOverReason]);
+
+  const handleActivatePowerUp = useCallback((id: string) => {
+    const pu = availablePowerUps.find(p => p.id === id);
+    if (pu?.type === 'BOMB') {
+      playSound(SoundType.BOMB);
+    }
+    activatePowerUp(id);
+  }, [activatePowerUp, availablePowerUps]);
 
 
   return (
@@ -64,7 +96,7 @@ const App: React.FC = () => {
         gameStats={gameStats}
         isDoublerActive={isDoublerActive}
         activePowerUpMode={activePowerUpMode}
-        onActivatePowerUp={activatePowerUp}
+        onActivatePowerUp={handleActivatePowerUp}
         onCancelPowerUp={cancelPowerUp}
       />
 
