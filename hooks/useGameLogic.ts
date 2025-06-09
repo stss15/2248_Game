@@ -207,16 +207,19 @@ const useGameLogic = () => {
     return false;
   }, []);
 
-  const advanceTurn = useCallback((
-        processedGrid: Grid, 
-        newEnergy: number, 
-        newScore: number, 
+  const advanceTurn = useCallback(
+        (
+        processedGrid: Grid,
+        newEnergy: number,
+        newScore: number,
         mergeDetails?: { chainLength: number, mergedValue: number, chainValues: number[], scoreFromMerge: number },
-        enemiesDestroyedThisMerge?: number
+        enemiesDestroyedThisMerge?: number,
+        currentEnemiesOverride?: Enemy[]
     ) => {
-    
+
     let gridAfterCooldowns = decrementCooldowns(processedGrid);
-    let updatedEnemies = moveAndSpawnEnemies(gridAfterCooldowns, enemies, turn + 1); // Pass next turn for spawn logic
+    const baseEnemies = currentEnemiesOverride ?? enemies;
+    let updatedEnemies = moveAndSpawnEnemies(gridAfterCooldowns, baseEnemies, turn + 1); // Pass next turn for spawn logic
 
     setGrid(gridAfterCooldowns);
     setEnemies(updatedEnemies);
@@ -298,13 +301,14 @@ const useGameLogic = () => {
             
             setActivePowerUpMode(ActivePowerUpMode.NONE);
             updateStats({powerUpsUsed: gameStats.powerUpsUsed + 1});
-            
+
             advanceTurn(
-                gridAfterGravity, 
+                gridAfterGravity,
                 energy - ENERGY_COST_PER_MERGE, // Bomb costs energy
-                score, 
-                undefined, 
-                enemiesDestroyedCount
+                score,
+                undefined,
+                enemiesDestroyedCount,
+                currentEnemies
             );
         }
         return;
@@ -324,18 +328,30 @@ const useGameLogic = () => {
             let newGrid = JSON.parse(JSON.stringify(grid)) as Grid;
             const tile1 = newGrid[pos1.r][pos1.c];
             const tile2 = newGrid[pos2.r][pos2.c];
-            
+
             // Swap tiles, ensuring their r,c properties are also updated
             newGrid[pos1.r][pos1.c] = tile2 ? {...tile2, r: pos1.r, c: pos1.c} : null;
             newGrid[pos2.r][pos2.c] = tile1 ? {...tile1, r: pos2.r, c: pos2.c} : null;
-            
+
+            // Move any enemies occupying these tiles as well
+            let updatedEnemies = [...enemies];
+            updatedEnemies = updatedEnemies.map(en => {
+                if (en.r === pos1.r && en.c === pos1.c) return { ...en, r: pos2.r, c: pos2.c };
+                if (en.r === pos2.r && en.c === pos2.c) return { ...en, r: pos1.r, c: pos1.c };
+                return en;
+            });
+            setEnemies(updatedEnemies);
+
             setActivePowerUpMode(ActivePowerUpMode.NONE);
             setTeleportFirstTile(null);
             updateStats({powerUpsUsed: gameStats.powerUpsUsed + 1});
             advanceTurn(
-                newGrid, 
+                newGrid,
                 energy - ENERGY_COST_PER_MERGE, // Teleport costs energy
-                score
+                score,
+                undefined,
+                undefined,
+                updatedEnemies
             );
         }
         return;
@@ -376,25 +392,35 @@ const useGameLogic = () => {
           let enemiesDestroyedCount = 0;
           let currentEnemies = [...enemies];
 
-          // Enemy destruction by merge chain
+          // Remove enemies that occupy any tile in the merge path
+          selectedPath.forEach(pos => {
+            const idx = currentEnemies.findIndex(en => en.r === pos.r && en.c === pos.c);
+            if (idx !== -1) {
+              currentEnemies.splice(idx, 1);
+              enemiesDestroyedCount++;
+            }
+          });
+
+          // Additional destruction for long chains
           if (selectedPath.length >= ENEMY_DESTRUCTION_CHAIN_LENGTH) {
             const lastMergedTilePos = selectedPath[selectedPath.length -1];
             for (let dr_enemy = -1; dr_enemy <= 1; dr_enemy++) {
                 for (let dc_enemy = -1; dc_enemy <=1; dc_enemy++) {
-                    if (dr_enemy === 0 && dc_enemy === 0) continue; // Don't check merge tile itself
+                    if (dr_enemy === 0 && dc_enemy === 0) continue; // skip merge tile itself
                     const adjR = lastMergedTilePos.r + dr_enemy;
                     const adjC = lastMergedTilePos.c + dc_enemy;
                     if (isValidCoordinate(adjR, adjC)) {
-                        const enemyIndex = currentEnemies.findIndex(en => en.r === adjR && en.c === adjC);
-                        if (enemyIndex !== -1) {
-                            currentEnemies = currentEnemies.filter((_,idx) => idx !== enemyIndex);
+                        const eIdx = currentEnemies.findIndex(en => en.r === adjR && en.c === adjC);
+                        if (eIdx !== -1) {
+                            currentEnemies.splice(eIdx, 1);
                             enemiesDestroyedCount++;
                         }
                     }
                 }
             }
-            if(enemiesDestroyedCount > 0) setEnemies(currentEnemies);
           }
+
+          if(enemiesDestroyedCount > 0) setEnemies(currentEnemies);
 
 
           const gridAfterGravity = applyGravityAndSpawn(gridAfterMerge);
@@ -405,11 +431,12 @@ const useGameLogic = () => {
           const chainValues = selectedPath.map(p => grid[p.r][p.c]!.value);
 
           advanceTurn(
-            gridAfterGravity, 
-            newEnergy, 
-            newScore, 
+            gridAfterGravity,
+            newEnergy,
+            newScore,
             { chainLength: selectedPath.length, mergedValue, chainValues, scoreFromMerge: scoreEarned },
-            enemiesDestroyedCount
+            enemiesDestroyedCount,
+            currentEnemies
           );
 
         }

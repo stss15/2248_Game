@@ -3,6 +3,56 @@
 /* Example body style mirroring index.html */
 body {
   font-family: 'Inter', sans-serif;
-  background-color: #1f2937; /* slate-800 */
   color: #f3f4f6; /* slate-100 */
+  background: radial-gradient(circle at top left, #1f2937, #111827);
+  min-height: 100vh;
+  background-attachment: fixed;
+}
+.tile-value-display {
+  font-weight: 800;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+}
+
+@keyframes tile-pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+@keyframes tile-merge-flash {
+  0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.7); }
+  70% { box-shadow: 0 0 20px 10px rgba(255,255,255,0); transform: scale(1.2); }
+  100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); transform: scale(1); }
+}
+
+@keyframes tile-wiggle {
+  0%,100% { transform: rotate(0); }
+  25% { transform: rotate(2deg); }
+  75% { transform: rotate(-2deg); }
+}
+
+.tile-appear {
+  animation: tile-pop 0.3s ease-out;
+}
+
+.tile-merge-flash {
+  animation: tile-merge-flash 0.35s ease-out;
+}
+
+.tile-wiggle {
+  animation: tile-wiggle 0.5s ease-in-out infinite;
+}
+
+.hud-glass {
+  background: rgba(30,41,59,0.8); /* slate-800 with opacity */
+  backdrop-filter: blur(10px);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.fade-in {
+  animation: fade-in 0.3s ease-out;
 }

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Tile, Position, Enemy } from '../types';
 import { getTileColors } from '../utils/theme';
 import { ENEMY_TARGET_R, ENEMY_TARGET_C } from '../constants';
@@ -15,6 +15,17 @@ interface TileDisplayProps {
 }
 
 const TileDisplay: React.FC<TileDisplayProps> = ({ tile, position, enemyOnTile, isSelected, isPathEnd, isTeleportTarget, onInteraction }) => {
+  const tileRef = useRef<HTMLDivElement>(null);
+  const prevValueRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (tileRef.current && tile && prevValueRef.current !== null && prevValueRef.current !== tile.value) {
+      tileRef.current.classList.add('tile-merge-flash');
+      const t = setTimeout(() => tileRef.current?.classList.remove('tile-merge-flash'), 350);
+      return () => clearTimeout(t);
+    }
+    prevValueRef.current = tile?.value ?? null;
+  }, [tile?.value]);
   const handleMouseDown = () => onInteraction(position.r, position.c, 'down');
   const handleMouseEnter = () => onInteraction(position.r, position.c, 'enter');
   // onMouseUp is typically handled globally in the parent component (GridDisplay or App)
@@ -29,7 +40,8 @@ const TileDisplay: React.FC<TileDisplayProps> = ({ tile, position, enemyOnTile, 
 
   return (
     <div
-      className={`w-full aspect-square ${tileClasses} ${isTeleportTarget ? 'ring-4 ring-green-400 animate-pulse' : ''} ${isCenterCell && !enemyOnTile ? 'bg-opacity-50 border-dashed border-sky-400' : ''}`}
+      ref={tileRef}
+      className={`w-full aspect-square tile-appear ${tileClasses} ${isTeleportTarget ? 'ring-4 ring-green-400 animate-pulse' : ''} ${isCenterCell && !enemyOnTile ? 'bg-opacity-50 border-dashed border-sky-400' : ''} ${isPathEnd ? 'tile-wiggle' : ''}`}
       onMouseDown={handleMouseDown}
       onMouseEnter={handleMouseEnter}
       role="button"
@@ -45,7 +57,7 @@ const TileDisplay: React.FC<TileDisplayProps> = ({ tile, position, enemyOnTile, 
         </div>
       )}
       {tile && !enemyOnTile && (
-         <span className={`tile-value-display ${tile.value >= 1000 ? 'text-sm' : tile.value >=100 ? 'text-base' : 'text-xl' }`}>
+         <span className={`tile-value-display ${tile.value >= 1000 ? 'text-xl md:text-2xl' : tile.value >=100 ? 'text-2xl md:text-3xl' : 'text-3xl md:text-4xl' }`}>
             {displayValue}
          </span>
       )}
